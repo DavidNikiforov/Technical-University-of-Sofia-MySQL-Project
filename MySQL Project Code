@@ -1,0 +1,190 @@
+DROP DATABASE IF EXISTS bug_tracker;
+CREATE DATABASE bug_tracker;
+USE bug_tracker;
+
+-- Задача 1. 
+
+CREATE TABLE IF NOT EXISTS devs (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS projects (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descr` VARCHAR(255) NOT NULL,
+  `id_manager` INT NOT NULL,
+  `id_po` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT 
+    FOREIGN KEY (`id_manager`)
+    REFERENCES `bug_tracker`.`devs` (`id`),
+  CONSTRAINT 
+    FOREIGN KEY (`id_po`)
+    REFERENCES `bug_tracker`.`devs` (`id`))
+ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS complexities (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `complexity` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS bugs (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descr` VARCHAR(255) NOT NULL,
+  `priority` ENUM('minor', 'medium', 'major', 'critical') NOT NULL,
+  `status` ENUM('new', 'addressed', 'failed', 'closed') NOT NULL,
+  `logged_time` DATETIME NOT NULL,
+  `id_project` INT NOT NULL,
+  `id_complex` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `bugs_ibfk_1`
+    FOREIGN KEY (`id_project`)
+    REFERENCES `bug_tracker`.`projects` (`id`),
+  CONSTRAINT `bugs_ibfk_2`
+    FOREIGN KEY (`id_complex`)
+    REFERENCES `bug_tracker`.`complexities` (`id`))
+ENGINE = InnoDB;
+
+
+
+CREATE TABLE IF NOT EXISTS project_devs (
+  `id_project` INT NOT NULL,
+  `id_dev` INT NOT NULL,
+  PRIMARY KEY (`id_project`, `id_dev`),
+  CONSTRAINT `project_devs_ibfk_1`
+    FOREIGN KEY (`id_project`)
+    REFERENCES `bug_tracker`.`projects` (`id`),
+  CONSTRAINT `project_devs_ibfk_2`
+    FOREIGN KEY (`id_dev`)
+    REFERENCES `bug_tracker`.`devs` (`id`))
+ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS qas (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS project_qas (
+  `id_project` INT NOT NULL,
+  `id_qas` INT NOT NULL,
+  PRIMARY KEY (`id_project`, `id_qas`),
+  CONSTRAINT `project_qas_ibfk_1`
+    FOREIGN KEY (`id_project`)
+    REFERENCES `bug_tracker`.`projects` (`id`),
+  CONSTRAINT `project_qas_ibfk_2`
+    FOREIGN KEY (`id_qas`)
+    REFERENCES `bug_tracker`.`qas` (`id`))
+ENGINE = InnoDB;
+
+INSERT INTO complexities(complexity)
+	VALUES	("low"),
+			("mid"),
+			("low"),
+			("high"),
+            ("high"),
+            ("low"),
+            ("mid"),
+            ("high"),
+            ("low"),
+			("mid");
+    
+INSERT INTO devs(name)
+	VALUES	("John"),
+			("Eric"), 
+			("Rick"), 
+			("James"), 
+			("Greg"), 
+			("Bob"), 
+			("Harry"),
+			("David"),
+			("Boris"),
+			("Max");
+    
+INSERT INTO projects(descr, id_manager, id_po)
+	VALUES	("Recipe Book", 1, 1),
+			("Weather Application", 2, 2),
+			("Expense Tracker", 3, 3),
+			("Fitness Tracker", 4, 4),
+            ("Book Catalogue", 5, 5),
+            ("Movie Recommendation System", 6, 6),
+            ("Music Player", 7, 7),
+            ("Budget Planner", 8, 8),
+            ("Social Network", 9, 9),
+			("Quiz Application", 10, 10);
+    
+
+INSERT INTO bugs(descr, priority, status, logged_time, id_project, id_complex)
+	VALUES	("description", 'minor', 'addressed', '2023-04-13 14:30:00', 1, 1),
+			("description", 'medium', 'new', '2023-01-11 15:20:00', 2, 2),
+			("description", 'medium', 'closed', '2023-02-06 13:30:00', 3, 3),
+			("description", 'major', 'failed', '2023-06-23 16:15:00', 4, 4),
+			("description", 'critical', 'closed', '2023-12-10 22:35:00', 5, 5),
+            ("description", 'minor', 'addressed', '2023-08-17 05:20:00', 6, 6),
+            ("description", 'minor', 'addressed', '2023-02-15 19:55:00', 7, 7),
+            ("description", 'critical', 'new', '2023-05-21 15:50:00', 8, 8),
+            ("description", 'medium', 'closed', '2023-01-23 10:00:00', 9, 9),
+            ("description", 'major', 'failed', '2023-11-12 11:40:00', 10, 10);
+            
+INSERT INTO qas(name)
+	VALUES	("Richard"), 
+			("Eduardo"), 
+			("Jimmy"), 
+			("Walter"), 
+			("Mike"), 
+			("Ivan"),
+			("Davis"),
+			("Viktor"),
+			("Michelle");
+            
+INSERT INTO project_devs(id_project, id_dev)
+	VALUES 	(1,1),
+			(2,2),
+			(3,3),
+			(4,4),
+			(5,5);
+            
+-- Задача 2.            
+            
+SELECT * FROM bugs
+WHERE status = "closed";
+
+-- Задача 3. 
+
+SELECT priority, COUNT(*) AS numberOfBugs
+FROM bugs
+GROUP BY priority; 
+
+-- Задача 4. 
+
+SELECT b.id, b.descr, b.priority, b.status, b.logged_time, p.descr AS project_descr, d.name AS dev_name
+FROM bugs b
+INNER JOIN projects p ON b.id_project = p.id
+INNER JOIN devs d ON p.id_manager = d.id OR p.id_po = d.id;
+
+-- Задача 5. 
+
+SELECT d.name AS DeveloperName, p.descr AS ProjectDescr
+FROM devs d
+LEFT OUTER JOIN project_devs pd ON d.id = pd.id_dev
+LEFT OUTER JOIN projects p ON pd.id_project = p.id;
+
+-- Задача 6. 
+
+SELECT *
+FROM bugs
+WHERE id_project IN (SELECT id FROM projects WHERE descr = 'Expense Tracker');
+
+-- Задача 7. 
+
+SELECT p.descr, COUNT(b.id) as num_bugs
+FROM projects p
+LEFT JOIN bugs b ON p.id = b.id_project
+GROUP BY p.descr;
